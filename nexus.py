@@ -67,9 +67,17 @@ def list_all_repos():
 
 def list_images_by_name(name):
     print("List of all images by name: " + name)
-    json_data = query_repo()
-    for value in json_data['items']:
+    lista = query_repo()
+    for value in lista:
         if value['name'] == name:
+            print(value['name'] + ':' + value['version'])
+
+
+def list_images_by_tag(tag):
+    print("List of all images by tag: " + tag)
+    lista = query_repo()
+    for value in lista:
+        if value['version'] == tag:
             print(value['name'] + ':' + value['version'])
 
 
@@ -85,33 +93,30 @@ def delete_images_by_name(name):
 
 def delete_images_by_tag(tag):
     print("Deleting images by tag: " + tag)
-    json_data = query_repo()
-    for value in json_data['items']:
+    lista = query_repo()
+    for value in lista:
         name = value['name']
         if value['version'] == tag:
             delete_image(name, tag)
 
-#def sort_images():
-#    json_data = query_repo()
-#    for value in sorted(json_data['items']):
-#        print(value)
-
 
 parser = argparse.ArgumentParser()
-parser.add_argument("action", help=":specify an action", choices=["list","delete","repos"])
-parser.add_argument("-n","--name", help="specify image name. Used in list and delete commands")
-parser.add_argument("-t","--tag", help="specify image tag. Used in list and delete commands")
+parser.add_argument("action", help=":specify an action", choices=["list", "delete", "repos"])
+parser.add_argument("-n", "--name", help="specify image name. Used in list and delete commands")
+parser.add_argument("-t", "--tag", help="specify image tag. Used in list and delete commands")
 parser.add_argument("--host", help="specify target Nexus hostname. Default is localhost", default="localhost")
 parser.add_argument("--port", help="specify target Nexus port. This is web access port. Default is 8081", default="8081")
 parser.add_argument("-u", "--username", help="specify Nexus login username. Default is admin", default="admin")
 parser.add_argument("-p", "--password", help="specify Nexus login password. Default is admin123", default="admin123")
-parser.add_argument("--repository", help="specify target Nexus docker repository. Default is docker_repo", default="docker_repo")
+parser.add_argument("--repository", help="specify target Nexus docker repository. Default is docker_repo", default='docker_repo')
 
 args = parser.parse_args()
 
-if args.action == "list" and args.name is not None:
+if args.action == "list" and args.name is not None and args.tag is None:
     list_images_by_name(args.name)
-elif args.action == "list" and args.name is None:
+elif args.action == "list" and args.tag is not None and args.name is None:
+    list_images_by_tag(args.tag)
+elif args.action == "list" and args.name is None and args.tag is None:
     list_all_images()
     #sort_images()
 
