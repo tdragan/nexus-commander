@@ -10,28 +10,36 @@ from operator import itemgetter
 # keep last n images
 # error catching
 # fix host, port vars to be prettier
-# remove proxy if exists
+# remove proxy if exists in env
 
 def query_repo():
     host = args.host
     port = args.port
     repo = args.repository
-    r = requests.get('http://' + host + ":" + port + '/service/rest/beta/components?repository=' + repo + "")
-    json_data = r.json()
-    return json_data
+    # http://localhost:8081/service/rest/beta/components?continuationToken=dfbef09efe1644ea13198eec17826be0&repository=docker_repo
+    req = requests.get('http://localhost:8081/service/rest/beta/components?repository=docker_repo')
+    json_data = req.json()
+    token = json_data['continuationToken']
+    sum = []
+    while token is not None:
+        req_with_token = requests.get('http://localhost:8081/service/rest/beta/components?continuationToken=' + token + '&repository=docker_repo')
+        json_data2 = req_with_token.json()
+        token = json_data2['continuationToken']
+        sum = sum + json_data2['items']
+    return sum + json_data['items']
 
 
 def get_id(name, tag):
-    json_data = query_repo()
-    for value in json_data['items']:
+    lista = query_repo()
+    for value in lista:
         if value['name'] == name and value['version'] == tag:
-            return value['id']
+            print(value['id'])
 
 
 def list_all_images():
     print("List of all images:")
-    json_data = query_repo()
-    for value in json_data['items']:
+    lista = query_repo()
+    for value in lista:
         print(value['name'] + ':' + value['version'])
 
 
@@ -83,10 +91,10 @@ def delete_images_by_tag(tag):
         if value['version'] == tag:
             delete_image(name, tag)
 
-def sort_images():
-    json_data = query_repo()
-    for value in sorted(json_data['items']):
-        print(value)
+#def sort_images():
+#    json_data = query_repo()
+#    for value in sorted(json_data['items']):
+#        print(value)
 
 
 parser = argparse.ArgumentParser()
@@ -104,8 +112,8 @@ args = parser.parse_args()
 if args.action == "list" and args.name is not None:
     list_images_by_name(args.name)
 elif args.action == "list" and args.name is None:
-    #list_all_images()
-    sort_images()
+    list_all_images()
+    #sort_images()
 
 if args.action == "repos":
     list_all_repos()
