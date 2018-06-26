@@ -8,7 +8,6 @@ import argparse
 # keep last n images
 # error catching
 # fix host, port vars to be prettier
-# remove proxy if exists in env
 # delete without -t and -n
 # catch exceptions
 
@@ -58,6 +57,8 @@ def delete_image(name, tag):
 
 
 def list_all_repos():
+    host = args.host
+    port = args.port
     print("List of all Nexus repositories:")
     r = requests.get("http://" + host + ":" + port + '/service/rest/beta/repositories')
     repo_data = r.json()
@@ -106,9 +107,10 @@ elif args.action == "list" and args.tag is not None and args.name is None:
     list_images_by_tag(args.tag)
 elif args.action == "list" and args.name is None and args.tag is None:
     list_all_images()
-    # sort_images()
+
 if args.action == "repos":
     list_all_repos()
+
 if args.action == "delete" and args.name is None and args.tag is not None:
     delete_images_by_tag(args.tag)
 elif args.action == "delete" and args.name is not None and args.tag is not None:
