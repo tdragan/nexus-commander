@@ -2,8 +2,6 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import argparse
-from operator import itemgetter
-
 
 # store arguments in a file
 # kad se lista image napisati broj instanci
@@ -11,10 +9,11 @@ from operator import itemgetter
 # error catching
 # fix host, port vars to be prettier
 # remove proxy if exists in env
+# delete without -t and -n
+# catch exceptions
 
 
 def query_repo():
-    # http://localhost:8081/service/rest/beta/components?continuationToken=dfbef09efe1644ea13198eec17826be0&repository=docker_repo
     host = args.host
     port = args.port
     repo = args.repository
@@ -24,19 +23,19 @@ def query_repo():
     sum = []
     while token is not None:
         req_with_token = requests.get(
-            'http://' + host + ':' + port + '/service/rest/beta/components?continuationToken=' + token + '&repository=' + repo + '')
+            'http://' + host + ':' + port + '/service/rest/beta/components?continuationToken=' + token + '&repository='
+            + repo + '')
         json_data2 = req_with_token.json()
         token = json_data2['continuationToken']
         sum = sum + json_data2['items']
     return sum + json_data['items']
 
-
 def get_id(name, tag):
     lista = query_repo()
     for value in lista:
         if value['name'] == name and value['version'] == tag:
-            return  value['id']
-
+            return value['id']
+    print('Image with that ID doesnt exist')
 
 def list_all_images():
     print("List of all images:")
@@ -50,22 +49,20 @@ def delete_image(name, tag):
     port = args.port
     username = args.username
     password = args.password
-    # json_data = query_repo()
-    toRemove = get_id(name, tag)
-    print("Deleting image(s): " + name + ":" + tag + "          with ID(s):", toRemove)
-    d = requests.delete("http://" + host + ":" + port + "/service/rest/beta/components/" + toRemove + "",
+    idToRemove = get_id(name, tag)
+    if idToRemove == None: return
+    d = requests.delete("http://" + host + ":" + port + "/service/rest/beta/components/" + idToRemove + "",
                         auth=HTTPBasicAuth(username, password))
+    if d.status_code == 204:
+        print('Image: ' + name + ':' + tag + ' successfully deleted')
 
 
 def list_all_repos():
-    host = args.host
-    port = args.port
     print("List of all Nexus repositories:")
     r = requests.get("http://" + host + ":" + port + '/service/rest/beta/repositories')
     repo_data = r.json()
     for value in repo_data:
         print(value['name'])
-
 
 def list_images_by_name(name):
     print("List of all images by name: " + name)
@@ -74,24 +71,12 @@ def list_images_by_name(name):
         if value['name'] == name:
             print(value['name'] + ':' + value['version'])
 
-
 def list_images_by_tag(tag):
     print("List of all images by tag: " + tag)
     lista = query_repo()
     for value in lista:
         if value['version'] == tag:
             print(value['name'] + ':' + value['version'])
-
-
-def delete_images_by_name(name):
-    print("Error: Option disabled")
-    # print("Deleting images by name: " + name)
-    # json_data = query_repo()
-    # for value in json_data['items']:
-    #    tag = value['version']
-    #    if value['name'] == name:
-    #        delete_image(name, tag)
-
 
 def delete_images_by_tag(tag):
     print("Deleting images by tag: " + tag)
@@ -124,9 +109,7 @@ elif args.action == "list" and args.name is None and args.tag is None:
     # sort_images()
 if args.action == "repos":
     list_all_repos()
-if args.action == "delete" and args.name is not None and args.tag is None:
-    delete_images_by_name(args.name)
-elif args.action == "delete" and args.name is None and args.tag is not None:
+if args.action == "delete" and args.name is None and args.tag is not None:
     delete_images_by_tag(args.tag)
 elif args.action == "delete" and args.name is not None and args.tag is not None:
     delete_image(args.name, args.tag)
