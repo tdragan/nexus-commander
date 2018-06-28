@@ -12,7 +12,7 @@ import requests_cache
 # delete without -t and -n
 # catch exceptions
 
-requests_cache.install_cache(cache_name='nexus_cache', backend='sqlite', expire_after=180)
+requests_cache.install_cache(cache_name='nexus_cache', backend='sqlite', expire_after=30)
 
 def query_repo():
     host = args.host
