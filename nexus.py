@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 import requests
 from requests.auth import HTTPBasicAuth
 import argparse
+import requests_cache
 
 # store arguments in a file
 # kad se lista image napisati broj instanci
@@ -11,6 +12,7 @@ import argparse
 # delete without -t and -n
 # catch exceptions
 
+requests_cache.install_cache(cache_name='nexus_cache', backend='sqlite', expire_after=180)
 
 def query_repo():
     host = args.host
